@@ -1,0 +1,8 @@
+.vscode
+.env
+*.txt
+node_modules/
+*.csv
+local/
+logs/
+timestamp.js

@@ -1,0 +1,19 @@
+{
+  "name": "uniswap_data_bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ziptalk/Uniswap_Data_Bot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ziptalk/Uniswap_Data_Bot/issues"
+  },
+  "homepage": "https://github.com/ziptalk/Uniswap_Data_Bot#readme"
+}
