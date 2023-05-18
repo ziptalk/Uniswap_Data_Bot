@@ -4,7 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:binance": "node ./src/data/script/binance-price.js",
+    "start:socket-v3": "MODE=SOCKET node ./src/data/script/pipeline-v3.js",
+    "start:schedule-v3": "MODE=SCHEDULE node ./src/data/script/pipeline-v3.js",
+    "start:socket-v2": "MODE=SOCKET node ./src/data/script/pipeline-v2.js",
+    "start:schedule-v2": "MODE=SCHEDULE node ./src/data/script/pipeline-v2.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +20,25 @@
   "bugs": {
     "url": "https://github.com/ziptalk/Uniswap_Data_Bot/issues"
   },
-  "homepage": "https://github.com/ziptalk/Uniswap_Data_Bot#readme"
+  "homepage": "https://github.com/ziptalk/Uniswap_Data_Bot#readme",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "bluebird": "^3.7.2",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.0.3",
+    "ethers": "^5.6.4",
+    "events": "^3.3.0",
+    "fast-csv": "^4.3.6",
+    "fs": "^0.0.1-security",
+    "graphql-request": "^6.0.0",
+    "ioredis": "^5.3.1",
+    "mkdirp": "^2.1.6",
+    "moment": "^2.29.4",
+    "mysql2": "^3.2.4",
+    "node-cron": "^3.0.2",
+    "web3": "^1.9.0",
+    "winston": "^3.8.2",
+    "winston-daily-rotate-file": "^4.7.1",
+    "ws": "^8.13.0"
+  }
 }

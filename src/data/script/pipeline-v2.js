@@ -3,6 +3,7 @@ const { RedisClient } = require('../../common/redis-client');
 const { UniswapV2Socket, Pair, Token } = require('../v2/uniswap-v2-socket');
 const { UniswapV2ApiHandler } = require('../v2/uniswap-v2-api-handler');
 const { DateHandler } = require('../../common/date-handler');
+const { StringHandler } = require('../../common/string-handler');
 
 const moment = require('moment');
 const cron = require('node-cron');
@@ -12,7 +13,6 @@ dotenv.config();
 const MODE = process.env.MODE;
 
 const Web3 = require('web3');
-const { StringHandler } = require('../../common/string-handler');
 const INFURA_API_KEY = process.env.INFURA_API_KEY;
 const web3 = new Web3();
 const provider = new Web3.providers.WebsocketProvider(

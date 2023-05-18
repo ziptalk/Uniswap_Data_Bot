@@ -3,6 +3,7 @@ const { RedisClient } = require('../../common/redis-client');
 const { UniswapV3Socket, Pool, Token } = require('../v3/uniswap-v3-socket');
 const { UniswapV3ApiHandler } = require('../v3/uniswap-v3-api-handler');
 const { DateHandler } = require('../../common/date-handler');
+const { StringHandler } = require('../../common/string-handler');
 
 const moment = require('moment');
 const cron = require('node-cron');
@@ -52,6 +53,7 @@ async function startUniswapV3Socket() {
         binanceRedisClient,
         uniswapRedisClient,
         web3,
+        INFURA_API_KEY,
       );
 
       await uniswapV3Socket.initializeContract();
@@ -60,8 +62,11 @@ async function startUniswapV3Socket() {
     }
   } catch (error) {
     console.error(
-      `[Uniswap-Socket] ${error.message} (${moment().utc().format()})`,
+      `[Uniswap-Socket-V3] ${error.message} (${moment().utc().format()})`,
     );
+    return setTimeout(() => {
+      return startUniswapV3Socket();
+    }, 3000);
   }
 }
 
@@ -111,8 +116,10 @@ async function executeCronSchedule() {
         await Database.execQuery(token1TableQuery),
       ]);
 
-      const token0Query = `INSERT INTO ${token0.symbol} (timestamp, destination, quantity, price, feeTier) VALUES (?,?,?,?,?)`;
-      const token1Query = `INSERT INTO ${token1.symbol} (timestamp, destination, quantity, price, feeTier) VALUES (?,?,?,?,?)`;
+      const table0 = StringHandler.makeValidTableName(token0.symbol);
+      const table1 = StringHandler.makeValidTableName(token1.symbol);
+      const token0Query = `INSERT INTO ${table0} (timestamp, exchange_token, quantity, price, feeTier) VALUES (?,?,?,?,?)`;
+      const token1Query = `INSERT INTO ${table1} (timestamp, exchange_token, quantity, price, feeTier) VALUES (?,?,?,?,?)`;
 
       await Promise.all([
         await Database.execQuery(token0Query, token0Value),
@@ -122,8 +129,11 @@ async function executeCronSchedule() {
     uniswapRedisClient.deleteKey(table);
   } catch (error) {
     console.error(
-      `[Uniswap-Schedule] ${error.message} (${moment().utc().format()})`,
+      `[Uniswap-Schedule-V3] ${error.message} (${moment().utc().format()})`,
     );
+    return setTimeout(() => {
+      return executeCronSchedule();
+    }, 3000);
   }
 }
 

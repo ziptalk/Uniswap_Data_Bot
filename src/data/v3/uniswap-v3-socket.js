@@ -1,3 +1,4 @@
+const Web3 = require('web3');
 const moment = require('moment');
 const { CoinGeckoApiHandler } = require('../coin-gecko-api-handler');
 const UniswapV3PoolAbi = require('./uniswap-v3-pool-abi');
@@ -9,12 +10,14 @@ class UniswapV3Socket {
     binanceRedisClient,
     uniswapRedisClient,
     web3,
+    INFURA_API_KEY,
   ) {
     this.pool = pool;
     this.socketEmitter = socketEmitter;
     this.binanceRedisClient = binanceRedisClient;
     this.uniswapRedisClient = uniswapRedisClient;
     this.web3 = web3;
+    this.INFURA_API_KEY = INFURA_API_KEY;
   }
 
   async initializeContract() {
@@ -25,27 +28,31 @@ class UniswapV3Socket {
   }
 
   subscribeToSwapEvents() {
-    return this.contract.events.Swap((error, event) => {
-      if (error) {
-        console.error(
-          `[Socket Error (pool:${this.pool.address})] ${error} (${moment()
+    this.contract.events
+      .Swap({})
+      .on('data', (event) => {
+        this.processSwapEventCallback(
+          new SwapInfo(
+            this.pool.token0,
+            this.pool.token1,
+            event.returnValues.amount0,
+            event.returnValues.amount1,
+            this.pool.feeTier,
+            moment().utc().valueOf(),
+          ),
+        );
+      })
+      .on('error', (error) => {
+        console.log(
+          `[Socket Error (pair:${this.pool.address})] ${error} (${moment()
             .utc()
             .format('YYYY-MM-DD HH:mm:ss')})`,
         );
+      })
+      .on('end', (error) => {
+        this.web3 = new Web3(`wss://mainnet.infura.io/ws/v3/${INFURA_API_KEY}`);
         return setTimeout(() => this.subscribeToSwapEvents(), 3000);
-      }
-
-      this.processSwapEventCallback(
-        new SwapInfo(
-          this.pool.token0,
-          this.pool.token1,
-          event.returnValues.amount0,
-          event.returnValues.amount1,
-          this.pool.feeTier,
-          moment().utc().valueOf(),
-        ),
-      );
-    });
+      });
   }
 
   processSwapEventCallback(swapInfo) {
