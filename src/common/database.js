@@ -1,4 +1,5 @@
 const mysql = require('mysql2/promise.js');
+const { StringHandler } = require('./string-handler');
 
 class Database {
   static async initialize(database) {
@@ -35,10 +36,11 @@ class Database {
   }
 
   static getCreateUniswapTxTableQuery(token) {
-    return `CREATE TABLE IF NOT EXISTS ${token} (
+    const table = StringHandler.makeValidTableName(token);
+    return `CREATE TABLE IF NOT EXISTS ${table} (
       id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
       timestamp DOUBLE NOT NULL,
-      destination VARCHAR(255) NOT NULL,
+      exchange_token VARCHAR(255) NOT NULL,
       quantity DOUBLE NOT NULL,
       price DOUBLE,
       feeTier DOUBLE NOT NULL
