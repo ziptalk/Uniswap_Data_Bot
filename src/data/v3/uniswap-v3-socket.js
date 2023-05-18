@@ -8,13 +8,13 @@ class UniswapV3Socket {
     socketEmitter,
     binanceRedisClient,
     uniswapRedisClient,
-    INFURA_API_KEY,
+    web3,
   ) {
     this.pool = pool;
     this.socketEmitter = socketEmitter;
     this.binanceRedisClient = binanceRedisClient;
     this.uniswapRedisClient = uniswapRedisClient;
-    this.web3 = new Web3(`wss://mainnet.infura.io/ws/v3/${INFURA_API_KEY}`);
+    this.web3 = web3;
   }
 
   async initializeContract() {

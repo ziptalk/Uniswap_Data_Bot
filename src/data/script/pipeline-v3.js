@@ -9,9 +9,11 @@ const cron = require('node-cron');
 const EventEmitter = require('events');
 const dotenv = require('dotenv');
 dotenv.config();
-
-const INFURA_API_KEY = process.env.INFURA_API_KEY;
 const MODE = process.env.MODE;
+
+const Web3 = require('web3');
+const INFURA_API_KEY = process.env.INFURA_API_KEY;
+const web3 = new Web3(`wss://mainnet.infura.io/ws/v3/${INFURA_API_KEY}`);
 
 async function main(MODE) {
   switch (MODE) {
@@ -49,7 +51,7 @@ async function startUniswapV3Socket() {
         new EventEmitter(),
         binanceRedisClient,
         uniswapRedisClient,
-        INFURA_API_KEY,
+        web3,
       );
 
       await uniswapV3Socket.initializeContract();
