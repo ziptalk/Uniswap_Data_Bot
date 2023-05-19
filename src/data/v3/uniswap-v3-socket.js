@@ -67,35 +67,35 @@ class UniswapV3Socket {
 
   processSocketEmitterCallback() {
     try {
-      this.socketEmitter.on(this.pool.address, (swapInfo) => {
+      this.socketEmitter.on(this.pool.address, async (swapInfo) => {
         const date = moment(swapInfo.timestamp)
           .utc()
           .format('YYYY-MM-DD-HH-mm');
         let token0Price, token1Price;
-        Promise.all([
-          this.binanceRedisClient.getValue(`${swapInfo.token0.symbol}`),
-          this.binanceRedisClient.getValue(`${swapInfo.token1.symbol}`),
-        ]).then(([price0, price1]) => {
-          token0Price = price0;
-          token1Price = price1;
 
-          if (!token0Price) {
-            CoinGeckoApiHandler.getPriceOfTokenInUsdt(swapInfo.token0).then(
-              (price) => {
-                token0Price = price;
-                swapInfo.setToken0Price(token0Price);
-                this.binanceRedisClient
-                  .setValue(swapInfo.token0.symbol, swapInfo.token0Price)
-                  .then(() => {
-                    return this.binanceRedisClient.setExpirationTime(
-                      swapInfo.token0.symbol,
-                      600,
-                    );
-                  });
-                if (!token1Price) {
-                  CoinGeckoApiHandler.getPriceOfTokenInUsdt(
-                    swapInfo.token1,
-                  ).then((price) => {
+        token0Price = await this.binanceRedisClient.getValue(
+          `${swapInfo.token0.symbol}`,
+        );
+        token1Price = await this.binanceRedisClient.getValue(
+          `${swapInfo.token1.symbol}`,
+        );
+
+        if (!token0Price) {
+          CoinGeckoApiHandler.getPriceOfTokenInUsdt(swapInfo.token0).then(
+            (price) => {
+              token0Price = price;
+              swapInfo.setToken0Price(token0Price);
+              this.binanceRedisClient
+                .setValue(swapInfo.token0.symbol, swapInfo.token0Price)
+                .then(() => {
+                  return this.binanceRedisClient.setExpirationTime(
+                    swapInfo.token0.symbol,
+                    600,
+                  );
+                });
+              if (!token1Price) {
+                CoinGeckoApiHandler.getPriceOfTokenInUsdt(swapInfo.token1).then(
+                  (price) => {
                     token1Price = price;
                     swapInfo.setToken1Price(token1Price);
                     this.binanceRedisClient
@@ -107,36 +107,36 @@ class UniswapV3Socket {
                         );
                       });
                     this.uniswapRedisClient.addSwapData(date, swapInfo);
-                  });
-                } else {
-                  swapInfo.setToken1Price(token1Price);
-                  this.uniswapRedisClient.addSwapData(date, swapInfo);
-                }
-              },
-            );
-          } else if (!token1Price) {
-            CoinGeckoApiHandler.getPriceOfTokenInUsdt(swapInfo.token1).then(
-              (price) => {
-                token1Price = price;
-                swapInfo.setToken0Price(token0Price);
+                  },
+                );
+              } else {
                 swapInfo.setToken1Price(token1Price);
-                this.binanceRedisClient
-                  .setValue(swapInfo.token1.symbol, swapInfo.token1Price)
-                  .then(() => {
-                    return this.binanceRedisClient.setExpirationTime(
-                      swapInfo.token1.symbol,
-                      600,
-                    );
-                  });
                 this.uniswapRedisClient.addSwapData(date, swapInfo);
-              },
-            );
-          } else {
-            swapInfo.setToken0Price(token0Price);
-            swapInfo.setToken1Price(token1Price);
-            this.uniswapRedisClient.addSwapData(date, swapInfo);
-          }
-        });
+              }
+            },
+          );
+        } else if (!token1Price) {
+          CoinGeckoApiHandler.getPriceOfTokenInUsdt(swapInfo.token1).then(
+            (price) => {
+              token1Price = price;
+              swapInfo.setToken0Price(token0Price);
+              swapInfo.setToken1Price(token1Price);
+              this.binanceRedisClient
+                .setValue(swapInfo.token1.symbol, swapInfo.token1Price)
+                .then(() => {
+                  return this.binanceRedisClient.setExpirationTime(
+                    swapInfo.token1.symbol,
+                    600,
+                  );
+                });
+              this.uniswapRedisClient.addSwapData(date, swapInfo);
+            },
+          );
+        } else {
+          swapInfo.setToken0Price(token0Price);
+          swapInfo.setToken1Price(token1Price);
+          this.uniswapRedisClient.addSwapData(date, swapInfo);
+        }
       });
     } catch (error) {
       console.error(`[SOCKET EMIT CALLBACK] ${error}`);
