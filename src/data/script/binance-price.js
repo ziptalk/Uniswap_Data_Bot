@@ -23,33 +23,27 @@ async function main() {
       return ticker.toLowerCase() + '@aggTrade';
     });
 
-    const socketEmmiter = new EventEmitter();
-    for (let ticker of tickers) {
-      socketEmmiter.on(ticker, (data) => {
-        let key = ticker.replace('USDT', '');
-        if (key === 'ETH') {
-          key = 'WETH';
-        } else if (key === 'BTC') {
-          key = 'WBTC';
-        }
-        redisClient.setValue(key, data).then(() => {
-          return redisClient.setExpirationTime(key, 600);
-        });
-      });
-    }
-
-    return Promise.all([
-      new BinanceSocket(
-        BINANCE_WS_ENDPOINT,
-        first100Path,
-        socketEmmiter,
-      ).processWebSocket(),
-      new BinanceSocket(
-        BINANCE_WS_ENDPOINT,
-        second100Path,
-        socketEmmiter,
-      ).processWebSocket(),
+    const firstSocket = new BinanceSocket(
+      BINANCE_WS_ENDPOINT,
+      first100Path,
+      first100Tickers,
+      redisClient,
+      new EventEmitter(),
+    );
+    const secondSocket = new BinanceSocket(
+      BINANCE_WS_ENDPOINT,
+      second100Path,
+      second100Tickers,
+      redisClient,
+      new EventEmitter(),
+    );
+    await Promise.all([
+      firstSocket.processWebSocket(),
+      secondSocket.processWebSocket(),
     ]);
+
+    firstSocket.processSocketEmitterCallback();
+    secondSocket.processSocketEmitterCallback();
   } catch (error) {
     console.error(
       `[Binance-Socket] ${error.message} (${moment().utc().format()})`,
