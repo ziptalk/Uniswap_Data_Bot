@@ -18,9 +18,6 @@ class CoinGeckoApiHandler {
       console.error(
         `[Axios Error-Coin-gecko] ${error.message} (token : ${token.symbol})`,
       );
-      if (error.response && error.response.status === 429) {
-        return this.handle429Error(error, this.getPriceOfTokenInUsdt(token));
-      }
     }
   }
 
@@ -31,6 +28,12 @@ class CoinGeckoApiHandler {
       );
       return response.data[fullName.toLowerCase()].usd;
     } catch (error) {
+      if (error.response && error.response.status === 429) {
+        return this.handle429Error(
+          error,
+          this.getPriceOfTokenInUsdtWithFullName(fullName),
+        );
+      }
       return null;
     }
   }
@@ -59,7 +62,6 @@ class CoinGeckoApiHandler {
   }
 
   static async handle429Error(error, callback) {
-    console.log('111', 111);
     const retryAfterInterval =
       error.response.headers['retry-after'] * 1000 || 5000;
     return new Promise((resolve) => {
@@ -76,6 +78,9 @@ class CoinGeckoApiHandler {
       const coin = coins.find((coin) => coin.symbol === symbol.toLowerCase());
       return coin.name.toLowerCase().replace(/ /g, '-');
     } catch (error) {
+      if (error.response && error.response.status === 429) {
+        return this.handle429Error(error, this.getFullNameOfToken(symbol));
+      }
       return null;
     }
   }
