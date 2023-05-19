@@ -4,13 +4,28 @@ class CoinGeckoApiHandler {
   static COIN_GECKO_API_ENDPOINT = 'https://api.coingecko.com/api/v3';
 
   static async getPriceOfTokenInUsdt(token) {
-    let priceInUsd = await this.getPriceOfTokenInUsdtWithSymbol(token.symbol);
-    if (!priceInUsd) {
-      const fullName = await this.getFullNameOfToken(token.symbol);
-      priceInUsd = await this.getPriceOfTokenInUsdtWithSymbol(fullName);
-      // priceInUsd = await this.getPriceOfTokenInUsdtWithName(token.name);
+    try {
+      let priceInUsd;
+      priceInUsd = await this.getPriceOfTokenInUsdtWithSymbol(token.symbol);
+
+      if (!priceInUsd) {
+        let fullName;
+        if (token.symbol.charAt(0) === '$') {
+          fullName = await this.getFullNameOfToken(token.symbol.slice(1));
+        } else {
+          fullName = await this.getFullNameOfToken(token.symbol);
+        }
+        if (fullName) {
+          priceInUsd = await this.getPriceOfTokenInUsdtWithSymbol(fullName);
+        }
+      }
+      return priceInUsd;
+    } catch (error) {
+      console.error(
+        `[Axios Error-Coin-gecko] ${error.message} (token : ${token.symbol})`,
+      );
+      return null;
     }
-    return priceInUsd;
   }
 
   static async getPriceOfTokenInUsdtWithSymbol(symbol) {
@@ -20,14 +35,7 @@ class CoinGeckoApiHandler {
       );
       return response.data[symbol.toLowerCase()].usd;
     } catch (error) {
-      if (error.response && error.response.status === 429) {
-        return this.handle429Error(
-          error,
-          this.getPriceOfTokenInUsdtWithSymbol(symbol),
-        );
-      } else {
-        return null;
-      }
+      return null;
     }
   }
 
@@ -71,14 +79,7 @@ class CoinGeckoApiHandler {
       const coin = coins.find((coin) => coin.symbol === symbol.toLowerCase());
       return coin.name.toLowerCase().replace(/ /g, '-');
     } catch (error) {
-      if (error.response && error.response.status === 429) {
-        return this.handle429Error(error, this.getFullNameOfToken(symbol));
-      } else {
-        console.error(
-          `[Axios Error-Coin-gecko] ${error.message} (token : ${symbol})`,
-        );
-        return null;
-      }
+      return null;
     }
   }
 }
