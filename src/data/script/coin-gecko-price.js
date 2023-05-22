@@ -40,7 +40,7 @@ async function getTokenPriceOfV3Pools() {
           token0Symbol,
         );
         await redisClient.setValue(token0Symbol, token0Price).then(() => {
-          return redisClient.setExpirationTime(token0Symbol, 600);
+          return redisClient.setExpirationTime(token0Symbol, 1200);
         });
       }
       if (!token1Price) {
@@ -48,7 +48,7 @@ async function getTokenPriceOfV3Pools() {
           token1Symbol,
         );
         await redisClient.setValue(token1Symbol, token1Price).then(() => {
-          return redisClient.setExpirationTime(token1Symbol, 600);
+          return redisClient.setExpirationTime(token1Symbol, 1200);
         });
       }
       await new Promise((resolve) => setTimeout(resolve, 5000));
