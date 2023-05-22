@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+const { ErrorHandler } = require('./http/error-handler');
 
 dotenv.config();
 
@@ -14,7 +15,7 @@ class App {
     this.#initializeMiddlewares();
     this.#intializeHealthCheck();
     this.#initialzeControllers(controllers);
-    // this.#initializeErrorHandling();
+    this.#initializeErrorHandling();
   }
 
   listen() {
@@ -59,9 +60,9 @@ class App {
     this.app.use(express.urlencoded({ extended: true, limit: '50mb' }));
   }
 
-  //   #initializeErrorHandling() {
-  //     this.app.use(ErrorHandler);
-  //   }
+  #initializeErrorHandling() {
+    this.app.use(ErrorHandler);
+  }
 }
 
 module.exports = { App };
