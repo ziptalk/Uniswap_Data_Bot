@@ -11,7 +11,7 @@ const BINANCE_WS_ENDPOINT = 'wss://stream.binance.com:9443/stream';
 
 async function main() {
   try {
-    const redisClient = new RedisClient('127.0.0.1', 6380);
+    const redisClient = new RedisClient('127.0.0.1', 6379);
     redisClient.setValue('USDT', 1);
     const tickers = await BinanceApiHandler.getTickerListsInUsdt();
     const first100Tickers = tickers.slice(0, 100);
