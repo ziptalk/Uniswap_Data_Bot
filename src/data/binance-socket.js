@@ -7,7 +7,7 @@ class BinanceSocket {
     this.tickers = tickers;
     this.redisClient = redisClient;
     this.socketEmiiter = socketEmiiter;
-    this.ws = new WebSocket(`${this.endPoint}/?streams=${this.path}`);
+    this.ws = new WebSocket(`${this.endPoint}?streams=${this.path}`);
   }
 
   processWebSocket() {

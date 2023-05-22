@@ -7,7 +7,7 @@ const EventEmitter = require('events');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const BINANCE_WS_ENDPOINT = 'wss://fstream.binance.com/stream';
+const BINANCE_WS_ENDPOINT = 'wss://stream.binance.com:9443/stream';
 
 async function main() {
   try {
@@ -17,10 +17,10 @@ async function main() {
     const first100Tickers = tickers.slice(0, 100);
     const second100Tickers = tickers.slice(100, 200);
     const first100Path = first100Tickers.map((ticker) => {
-      return ticker.toLowerCase() + '@aggTrade';
+      return ticker.toLowerCase() + '@trade';
     });
     const second100Path = second100Tickers.map((ticker) => {
-      return ticker.toLowerCase() + '@aggTrade';
+      return ticker.toLowerCase() + '@trade';
     });
 
     const firstSocket = new BinanceSocket(
