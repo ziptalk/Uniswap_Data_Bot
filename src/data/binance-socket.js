@@ -27,7 +27,7 @@ class BinanceSocket {
 
     this.ws.onclose = () => {
       console.log('binance_ws_close');
-      this.ws = new WebSocket(`${this.endPoint}/?streams=${this.path}`);
+      this.ws = new WebSocket(`${this.endPoint}?streams=${this.path}`);
       setTimeout(() => {
         this.processWebSocket();
       }, 1000);
