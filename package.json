@@ -10,7 +10,9 @@
     "start:schedule-v3": "MODE=SCHEDULE node ./src/data/script/pipeline-v3.js",
     "start:socket-v2": "MODE=SOCKET node ./src/data/script/pipeline-v2.js",
     "start:schedule-v2": "MODE=SCHEDULE node ./src/data/script/pipeline-v2.js",
-    "start:api": "nodemon ./src/api/server.js"
+    "start:api": "nodemon ./src/api/server.js",
+    "start:coingecko-v3": "MODE=V3 node ./src/data/script/coin-gecko-price.js",
+    "start:coingecko-v2": "MODE=V2 node ./src/data/script/coin-gecko-price.js"
   },
   "repository": {
     "type": "git",

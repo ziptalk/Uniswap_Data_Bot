@@ -38,7 +38,7 @@ async function main(MODE) {
 async function startUniswapV3Socket() {
   try {
     const uniswapRedisClient = new RedisClient('127.0.0.1', 6379);
-    const binanceRedisClient = new RedisClient('127.0.0.1', 6380);
+    const binanceRedisClient = new RedisClient('43.206.110.223', 6379);
     const top100Pools = await UniswapV3ApiHandler.getTopPoolsOrderedByTvl(100);
 
     for (let pool of top100Pools) {

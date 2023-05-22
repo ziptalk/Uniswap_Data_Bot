@@ -7,49 +7,43 @@ const EventEmitter = require('events');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const BINANCE_WS_ENDPOINT = 'wss://fstream.binance.com/stream';
+const BINANCE_WS_ENDPOINT = 'wss://stream.binance.com:9443/stream';
 
 async function main() {
   try {
-    const redisClient = new RedisClient('127.0.0.1', 6380);
+    const redisClient = new RedisClient('127.0.0.1', 6379);
     redisClient.setValue('USDT', 1);
     const tickers = await BinanceApiHandler.getTickerListsInUsdt();
     const first100Tickers = tickers.slice(0, 100);
     const second100Tickers = tickers.slice(100, 200);
     const first100Path = first100Tickers.map((ticker) => {
-      return ticker.toLowerCase() + '@aggTrade';
+      return ticker.toLowerCase() + '@trade';
     });
     const second100Path = second100Tickers.map((ticker) => {
-      return ticker.toLowerCase() + '@aggTrade';
+      return ticker.toLowerCase() + '@trade';
     });
 
-    const socketEmmiter = new EventEmitter();
-    for (let ticker of tickers) {
-      socketEmmiter.on(ticker, (data) => {
-        let key = ticker.replace('USDT', '');
-        if (key === 'ETH') {
-          key = 'WETH';
-        } else if (key === 'BTC') {
-          key = 'WBTC';
-        }
-        redisClient.setValue(key, data).then(() => {
-          return redisClient.setExpirationTime(key, 600);
-        });
-      });
-    }
-
-    return Promise.all([
-      new BinanceSocket(
-        BINANCE_WS_ENDPOINT,
-        first100Path,
-        socketEmmiter,
-      ).processWebSocket(),
-      new BinanceSocket(
-        BINANCE_WS_ENDPOINT,
-        second100Path,
-        socketEmmiter,
-      ).processWebSocket(),
+    const firstSocket = new BinanceSocket(
+      BINANCE_WS_ENDPOINT,
+      first100Path,
+      first100Tickers,
+      redisClient,
+      new EventEmitter(),
+    );
+    const secondSocket = new BinanceSocket(
+      BINANCE_WS_ENDPOINT,
+      second100Path,
+      second100Tickers,
+      redisClient,
+      new EventEmitter(),
+    );
+    await Promise.all([
+      firstSocket.processWebSocket(),
+      secondSocket.processWebSocket(),
     ]);
+
+    firstSocket.processSocketEmitterCallback();
+    secondSocket.processSocketEmitterCallback();
   } catch (error) {
     console.error(
       `[Binance-Socket] ${error.message} (${moment().utc().format()})`,
