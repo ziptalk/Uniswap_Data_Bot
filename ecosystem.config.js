@@ -69,12 +69,25 @@ module.exports = {
       name: 'uniswap-v2-schedule',
       script: './src/data/script/pipeline-v2.js',
       instances: 1,
-      exec_mode: 'fork',
+      exec_mode: 'cluster',
       env: {
         MODE: 'SCHEDULE',
       },
       env_production: {
         MODE: 'SCHEDULE',
+      },
+      watch: false,
+    },
+    {
+      name: 'uniswap-data-api',
+      script: './src/api/server.js',
+      instances: 1,
+      exec_mode: 'cluster',
+      env: {
+        MODE: 'PRODUCTION',
+      },
+      env_production: {
+        MODE: 'PRODUCTION',
       },
       watch: false,
     },
