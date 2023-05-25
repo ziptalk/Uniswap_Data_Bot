@@ -28,7 +28,7 @@ class SwapController {
   }
 
   async getSwaps(req, res) {
-    const { symbol, interval } = req.query;
+    const { symbol, interval, limit = 1000 } = req.query;
     if (!symbol || !interval) {
       throw new HttpException(
         400,
@@ -42,7 +42,7 @@ class SwapController {
       );
     }
 
-    const data = await this.swapService.getSwaps(symbol, interval);
+    const data = await this.swapService.getSwaps(symbol, interval, limit);
     return { data };
   }
 }

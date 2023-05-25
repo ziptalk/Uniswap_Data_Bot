@@ -10,9 +10,9 @@ class SwapService {
     return 'test';
   }
 
-  async getSwaps(symbol, interval) {
+  async getSwaps(symbol, interval, limit) {
     const table = StringHandler.makeValidTableName(symbol);
-    const selectQuery = `select * from ${table} order by timestamp;`;
+    const selectQuery = `select * from ${table} order by timestamp desc limit ${limit};`;
     let rows = await Database.execQuery(selectQuery);
     if (!rows || !rows.length) {
       throw new HttpException(400, `No data found (symbol : ${symbol})`);
