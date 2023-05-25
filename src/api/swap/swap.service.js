@@ -10,7 +10,16 @@ class SwapService {
     return 'test';
   }
 
-  async getSwaps(symbol, interval, limit) {
+  async getSwaps(symbols, interval, limit) {
+    const data = await Promise.all(
+      await symbols.map(async (symbol) => {
+        return this.#getSwapsOfOneSymbol(symbol, interval, limit);
+      }),
+    );
+    return data;
+  }
+
+  async #getSwapsOfOneSymbol(symbol, interval, limit) {
     const table = StringHandler.makeValidTableName(symbol);
     const selectQuery = `select * from ${table} order by timestamp desc limit ${limit};`;
     let rows = await Database.execQuery(selectQuery);
@@ -48,7 +57,7 @@ class SwapService {
       quantity_out: 'sum',
       quantity_price: 'sum',
     });
-    return dfd.toJSON(result);
+    return { symbol, result: dfd.toJSON(result) };
   }
 }
 

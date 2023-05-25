@@ -19,7 +19,7 @@ class SwapController {
   #initializeRoutes() {
     this.router
       .get('/test', ResponseHandler(this.getTest.bind(this)))
-      .get('/', ResponseHandler(this.getSwaps.bind(this)));
+      .get('/*', ResponseHandler(this.getSwaps.bind(this)));
   }
 
   async getTest(req, res) {
@@ -28,11 +28,12 @@ class SwapController {
   }
 
   async getSwaps(req, res) {
-    const { symbol, interval, limit = 1000 } = req.query;
-    if (!symbol || !interval) {
+    const symbols = req.params[0].split('/');
+    const { interval, limit = 1000 } = req.query;
+    if (symbols.length === 0 || !interval) {
       throw new HttpException(
         400,
-        'Missing required parameters (symbol, interval)',
+        'Missing required parameters (symbols, interval)',
       );
     }
     if (!INTERVAL[interval]) {
@@ -42,7 +43,7 @@ class SwapController {
       );
     }
 
-    const data = await this.swapService.getSwaps(symbol, interval, limit);
+    const data = await this.swapService.getSwaps(symbols, interval, limit);
     return { data };
   }
 }

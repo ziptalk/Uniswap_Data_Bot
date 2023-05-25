@@ -29,11 +29,26 @@ class DateHandler {
   }
 
   static createMomentFromInterval(timestamp, interval) {
-    const newMoment = moment(timestamp).utc();
-    const minutes = Math.floor(interval / 60000);
-    newMoment.minutes(Math.floor(newMoment.minutes() / minutes) * minutes);
-    newMoment.seconds(0);
-    newMoment.milliseconds(0);
+    let newMoment = moment(timestamp).utc();
+    if (interval < 3600000) {
+      const minutes = Math.floor(interval / 60000);
+      newMoment.minutes(Math.floor(newMoment.minutes() / minutes) * minutes);
+      newMoment.seconds(0);
+      newMoment.milliseconds(0);
+    } else if (interval < 86400000) {
+      const hours = Math.floor(interval / 3600000);
+      newMoment.hours(Math.floor(newMoment.hours() / hours) * hours);
+      newMoment.minutes(0);
+      newMoment.seconds(0);
+      newMoment.milliseconds(0);
+    } else {
+      const days = Math.floor(interval / 86400000);
+      newMoment.date(Math.floor(newMoment.date() / days) * days);
+      newMoment.hours(0);
+      newMoment.minutes(0);
+      newMoment.seconds(0);
+      newMoment.milliseconds(0);
+    }
     return newMoment;
   }
 
