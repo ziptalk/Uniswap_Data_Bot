@@ -1,6 +1,5 @@
 const Web3 = require('web3');
 const moment = require('moment');
-const { CoinGeckoApiHandler } = require('../coin-gecko-api-handler');
 const UniswapV3PoolAbi = require('./uniswap-v3-pool-abi');
 
 class UniswapV3Socket {
