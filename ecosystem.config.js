@@ -14,7 +14,7 @@ module.exports = {
       watch: false,
     },
     {
-      name: 'coingecko-price-socket',
+      name: 'coingecko-price-socket-v3',
       script: './src/data/script/coin-gecko-price.js',
       instances: 1,
       exec_mode: 'cluster',
@@ -23,6 +23,19 @@ module.exports = {
       },
       env_production: {
         MODE: 'V3',
+      },
+      watch: false,
+    },
+    {
+      name: 'coingecko-price-socket-v2',
+      script: './src/data/script/coin-gecko-price.js',
+      instances: 1,
+      exec_mode: 'cluster',
+      env: {
+        MODE: 'V2',
+      },
+      env_production: {
+        MODE: 'V2',
       },
       watch: false,
     },

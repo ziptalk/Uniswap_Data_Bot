@@ -83,9 +83,6 @@ async function getTokenPriceOfV2Pairs() {
       const token0Symbol = token0.symbol;
       const token1Symbol = token1.symbol;
 
-      console.log('token0Symbol', token0Symbol);
-      console.log('token1Symbol', token1Symbol);
-
       let token0Price = await redisClient.getValue(token0Symbol);
       let token1Price = await redisClient.getValue(token1Symbol);
 
@@ -105,8 +102,6 @@ async function getTokenPriceOfV2Pairs() {
           return redisClient.setExpirationTime(token1Symbol, 1200);
         });
       }
-      console.log('token0Price', token0Price);
-      console.log('token1Price', token1Price);
 
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
