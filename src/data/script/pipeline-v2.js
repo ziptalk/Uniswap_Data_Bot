@@ -42,7 +42,7 @@ async function main(MODE) {
 async function startUniswapV2Socket() {
   try {
     const uniswapRedisClient = new RedisClient('127.0.0.1', 6379);
-    const binanceRedisClient = new RedisClient('54.199.201.37', 6380);
+    const binanceRedisClient = new RedisClient('54.199.201.37', 6379);
     const top100Pairs = await UniswapV2ApiHandler.getTopActivePairs(100);
 
     for (let pair of top100Pairs) {

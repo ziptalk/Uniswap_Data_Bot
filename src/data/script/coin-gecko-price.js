@@ -74,7 +74,7 @@ async function getTokenPriceOfV3Pools() {
 
 async function getTokenPriceOfV2Pairs() {
   try {
-    const redisClient = new RedisClient('127.0.0.1', 6380);
+    const redisClient = new RedisClient('127.0.0.1', 6379);
     const top100Pairs = await UniswapV2ApiHandler.getTopActivePairs(100);
     const shuffledTop100Pairs = shuffleArray(top100Pairs);
 
