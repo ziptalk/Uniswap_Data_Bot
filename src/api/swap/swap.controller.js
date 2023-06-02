@@ -23,7 +23,7 @@ class SwapController {
         '/quantity',
         ResponseHandler(this.getSwapQuantityForOneDay.bind(this)),
       )
-      .get('/*', ResponseHandler(this.getSwaps.bind(this)));
+      .get('/tx/*', ResponseHandler(this.getSwaps.bind(this)));
   }
 
   async getTest(req, res) {

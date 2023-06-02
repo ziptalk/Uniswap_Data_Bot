@@ -63,7 +63,6 @@ class SwapService {
     let rows = await Database.execQuery(selectQuery);
     if (!rows || !rows.length) {
       return;
-      throw new HttpException(400, `No data found (symbol : ${symbol})`);
     }
 
     const quantity = rows.reduce((acc, cur) => {
