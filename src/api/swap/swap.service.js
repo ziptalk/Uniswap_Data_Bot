@@ -19,10 +19,12 @@ class SwapService {
     return data;
   }
 
-  async getSwapQuantityForOneDay(symbols) {
+  async getSwapQuantityForOneDay() {
     const endMoment = DateHandler.getCurrentTimestamp();
     const startMoment = endMoment - 86400000;
-    const swaps = await Promise.all(
+
+    const symbols = await this.#getAllSymbolsFromRds();
+    let swaps = await Promise.all(
       await symbols.map(async (symbol) => {
         return this.#getSwapsForOneDayOfOneSymbol(
           symbol,
@@ -31,6 +33,9 @@ class SwapService {
         );
       }),
     );
+    swaps = await swaps.filter((swap) => {
+      return swap !== undefined;
+    });
     const data = {
       startMoment,
       endMoment,
@@ -39,11 +44,25 @@ class SwapService {
     return data;
   }
 
+  async #getAllSymbolsFromRds() {
+    const query = `select table_name from information_schema.tables where table_schema = 'uniswap_v3_tx'`;
+    const tables = await Database.execQuery(query);
+    const symbols = tables.map((table) => {
+      const name = table.table_name;
+      if (name[0] === '_') {
+        return name.slice(1);
+      }
+      return name;
+    });
+    return symbols;
+  }
+
   async #getSwapsForOneDayOfOneSymbol(symbol, startMomnet, endMoment) {
     const table = StringHandler.makeValidTableName(symbol);
     const selectQuery = `select * from ${table} where timestamp between ${startMomnet} and ${endMoment} order by timestamp desc;`;
     let rows = await Database.execQuery(selectQuery);
     if (!rows || !rows.length) {
+      return;
       throw new HttpException(400, `No data found (symbol : ${symbol})`);
     }
 
