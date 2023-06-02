@@ -1,30 +1,65 @@
 const axios = require('axios');
 const { BinanceApiHandler } = require('../data/binance-api-handler');
-
-// 1분에 한번씩 API를 호출해서 증감량을 확인함
-// API를 지속적으로 호출해서 증감량을 확인해서
+const {
+  UniswapV3SubgraphHandler,
+} = require('./api/uniswap-v3-subgraph-handler');
+const { DateHandler } = require('../common/date-handler');
 
 async function main() {
-  // 모니터링 할 토큰과 각종 파라미터들을 설정함
-  // const tokens = ['WETH', 'PEPE'];
-  const tokens = ['PEPE'];
-  const interval = '1d';
-  const limit = 10000;
-  const url = 'http://43.206.103.223:3000';
-  const path = 'swap';
-  const params = tokens.join('/');
-  const query = `interval=${interval}&limit=${limit}`;
+  const url = 'http://43.206.103.223:3000/swap/quantity';
 
   try {
-    const response = await axios.get(`${url}/${path}/${params}?${query}`);
-    const data = response.data.data;
-    for (let datum of data) {
-      console.log('datum', datum);
+    const binanceExchangeInfo = await BinanceApiHandler.getExchangeInfo();
+
+    const endTimestamp = DateHandler.getCurrentTimestamp();
+    const startTimestamp = endTimestamp - 86400000;
+    const tokens = await UniswapV3SubgraphHandler.getAllTokensInfo(
+      startTimestamp,
+      endTimestamp,
+    );
+
+    const response = await axios.get(url);
+    const swaps = response.data.data.swaps;
+
+    const tokenInfo = new Map();
+    for (let token of tokens) {
+      tokenInfo[`${token.symbol}`] = token;
+    }
+    let delta = new Map();
+    for (let swap of swaps) {
+      if (tokenInfo.hasOwnProperty(swap.symbol)) {
+        delta[swap.symbol] =
+          (Number(swap.quantity) /
+            (Number(tokenInfo[swap.symbol].volume) + Number(swap.quantity))) *
+          100;
+      }
+    }
+    delta = Object.entries(delta).sort((a, b) => {
+      return a[1] - b[1];
+    });
+    // delta 값이 제일 큰 놈을 long, 제일 작은 놈을 short => BUSD 해보고, LDO BUSD 해보고
+    // 전체 목록을 가져오자 -> 바이낸스 FUTURE에 있는 모든 종목
+
+    for (let i = 0; i < delta.length; i++) {
+      if (binanceExchangeInfo.hasOwnProperty(`${delta[i][0]}BUSD`)) {
+        console.log(`${delta[i][0]}BUSD`, 'short 들어간다 !');
+        break;
+      } else if (binanceExchangeInfo.hasOwnProperty(`${delta[i][0]}USDT`)) {
+        console.log(`${delta[i][0]}USDT`, 'short 들어간다 !');
+        break;
+      }
+    }
+
+    for (let i = delta.length - 1; i > 0; i--) {
+      if (binanceExchangeInfo.hasOwnProperty(`${delta[i][0]}BUSD`)) {
+        console.log(`${delta[i][0]}BUSD`, 'long 들어간다 !');
+        break;
+      } else if (binanceExchangeInfo.hasOwnProperty(`${delta[i][0]}USDT`)) {
+        console.log(`${delta[i][0]}USDT`, 'long 들어간다 !');
+        break;
+      }
     }
   } catch (error) {
-    console.error(
-      `[Axios Error] ${error.response.data.message} (status : ${error.response.status})))`,
-    );
     process.exit(0);
   }
 
