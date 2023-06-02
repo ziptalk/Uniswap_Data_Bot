@@ -19,6 +19,40 @@ class SwapService {
     return data;
   }
 
+  async getSwapQuantityForOneDay(symbols) {
+    const endMoment = DateHandler.getCurrentTimestamp();
+    const startMoment = endMoment - 86400000;
+    const swaps = await Promise.all(
+      await symbols.map(async (symbol) => {
+        return this.#getSwapsForOneDayOfOneSymbol(
+          symbol,
+          startMoment,
+          endMoment,
+        );
+      }),
+    );
+    const data = {
+      startMoment,
+      endMoment,
+      swaps,
+    };
+    return data;
+  }
+
+  async #getSwapsForOneDayOfOneSymbol(symbol, startMomnet, endMoment) {
+    const table = StringHandler.makeValidTableName(symbol);
+    const selectQuery = `select * from ${table} where timestamp between ${startMomnet} and ${endMoment} order by timestamp desc;`;
+    let rows = await Database.execQuery(selectQuery);
+    if (!rows || !rows.length) {
+      throw new HttpException(400, `No data found (symbol : ${symbol})`);
+    }
+
+    const quantity = rows.reduce((acc, cur) => {
+      return acc + parseFloat(cur.quantity);
+    }, 0);
+    return { symbol, quantity };
+  }
+
   async #getSwapsOfOneSymbol(symbol, interval, limit) {
     const table = StringHandler.makeValidTableName(symbol);
     const selectQuery = `select * from ${table} order by timestamp desc limit ${limit};`;

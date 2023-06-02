@@ -19,11 +19,21 @@ class SwapController {
   #initializeRoutes() {
     this.router
       .get('/test', ResponseHandler(this.getTest.bind(this)))
-      .get('/*', ResponseHandler(this.getSwaps.bind(this)));
+      .get('/*', ResponseHandler(this.getSwapQuantityForOneDay.bind(this)));
   }
 
   async getTest(req, res) {
     const data = await this.swapService.getTest();
+    return { data };
+  }
+
+  async getSwapQuantityForOneDay(req, res) {
+    const symbols = req.params[0].split('/');
+    if (symbols.length === 0) {
+      throw new HttpException(400, 'Missing required parameters (symbols)');
+    }
+
+    const data = await this.swapService.getSwapQuantityForOneDay(symbols);
     return { data };
   }
 
