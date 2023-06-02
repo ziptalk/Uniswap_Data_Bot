@@ -8,7 +8,7 @@ async function main() {
   // 모니터링 할 토큰과 각종 파라미터들을 설정함
   // const tokens = ['WETH', 'PEPE'];
   const tokens = ['PEPE'];
-  const interval = '1h';
+  const interval = '1d';
   const limit = 10000;
   const url = 'http://43.206.103.223:3000';
   const path = 'swap';
