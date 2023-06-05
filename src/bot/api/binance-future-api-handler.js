@@ -169,6 +169,34 @@ class BinanceFutureApiHandler {
     });
   }
 
+  static async closePosition(symbol, position, quantity) {
+    const path = 'fapi/v1/order';
+    const params = {
+      symbol,
+      side: position,
+      type: 'MARKET',
+      quantity,
+      timestamp: new Date().getTime(),
+      reduceOnly: true,
+    };
+
+    const queryString = this.#makeQueryString(params);
+    const signature = this.#getSignature(queryString);
+
+    const url = `${this.BINANCE_FUTURE_ENDPOINT}/${path}?${queryString}&signature=${signature}`;
+    const headers = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-MBX-APIKEY': this.BINANCE_API_KEY,
+    };
+
+    return this.sendAxiosRequest({
+      url,
+      method: 'POST',
+      data: null,
+      headers,
+    });
+  }
+
   static #makeQueryString(params) {
     return Object.keys(params)
       .reduce((a, k) => {

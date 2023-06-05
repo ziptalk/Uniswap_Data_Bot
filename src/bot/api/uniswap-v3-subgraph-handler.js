@@ -64,24 +64,19 @@ class UniswapV3SubgraphHandler {
     }
   }
 
-  static async getAllTokensInfo(startTimestamp, endTimestamp) {
+  static async getAllTokensInfo() {
     try {
       const query = `
-          {
-            tokens (orderBy: volumeUSD, orderDirection: desc) {
-              id
-              symbol
-              name
-              decimals
-              volume(
-                where: {
-                  timestamp_gte: ${startTimestamp}
-                  timestamp_lt: ${endTimestamp}
-                }
-              )
-            }
+        {
+          tokens (orderBy: volumeUSD, orderDirection: desc) {
+            id
+            symbol
+            name
+            decimals
+            totalValueLocked
           }
-        `;
+        }
+      `;
 
       const response = await axios.post(this.UNISWAP_V3_SUBGRAPH_ENDPOINT, {
         query,

@@ -1,26 +1,19 @@
 const axios = require('axios');
-const { BinanceApiHandler } = require('../data/binance-api-handler');
+const cron = require('node-cron');
+const { BinanceFutureApiHandler } = require('./api/binance-future-api-handler');
 const {
   UniswapV3SubgraphHandler,
 } = require('./api/uniswap-v3-subgraph-handler');
-const { DateHandler } = require('../common/date-handler');
 
-async function main() {
-  const url = 'http://43.206.103.223:3000/swap/quantity';
-
+async function openPosition() {
   try {
-    const binanceExchangeInfo = await BinanceApiHandler.getExchangeInfo();
-
-    const endTimestamp = DateHandler.getCurrentTimestamp();
-    const startTimestamp = endTimestamp - 86400000;
-    const tokens = await UniswapV3SubgraphHandler.getAllTokensInfo(
-      startTimestamp,
-      endTimestamp,
-    );
-
+    console.log('OPEN POSITION');
+    const binanceFutureExchangeInfo =
+      await BinanceFutureApiHandler.getExchangeInfo();
+    const tokens = await UniswapV3SubgraphHandler.getAllTokensInfo();
+    const url = 'http://43.206.103.223:3000/swap/quantity';
     const response = await axios.get(url);
     const swaps = response.data.data.swaps;
-
     const tokenInfo = new Map();
     for (let token of tokens) {
       tokenInfo[`${token.symbol}`] = token;
@@ -30,50 +23,98 @@ async function main() {
       if (tokenInfo.hasOwnProperty(swap.symbol)) {
         delta[swap.symbol] =
           (Number(swap.quantity) /
-            (Number(tokenInfo[swap.symbol].volume) + Number(swap.quantity))) *
+            Number(tokenInfo[swap.symbol].totalValueLocked)) *
           100;
       }
     }
     delta = Object.entries(delta).sort((a, b) => {
       return a[1] - b[1];
     });
-    // delta 값이 제일 큰 놈을 long, 제일 작은 놈을 short => BUSD 해보고, LDO BUSD 해보고
-    // 전체 목록을 가져오자 -> 바이낸스 FUTURE에 있는 모든 종목
 
+    let isShort = false;
+    // short
     for (let i = 0; i < delta.length; i++) {
-      if (binanceExchangeInfo.hasOwnProperty(`${delta[i][0]}BUSD`)) {
-        console.log(`${delta[i][0]}BUSD`, 'short 들어간다 !');
+      if (
+        `${delta[i][0]}` === 'USDT' ||
+        `${delta[i][0]}` === 'BUSD' ||
+        `${delta[i][0]}` === 'USDC'
+      ) {
+        continue;
+      }
+
+      if (delta[i][1] > 0) {
         break;
-      } else if (binanceExchangeInfo.hasOwnProperty(`${delta[i][0]}USDT`)) {
-        console.log(`${delta[i][0]}USDT`, 'short 들어간다 !');
+      }
+      if (binanceFutureExchangeInfo.hasOwnProperty(`${delta[i][0]}USDT`)) {
+        const shortSymbol = `${delta[i][0]}USDT`;
+        const accountInfo = await BinanceFutureApiHandler.getAccountInfo(true, [
+          'USDT',
+        ]);
+        const quantity = (
+          Number(accountInfo[0]['availableBalance']) * 0.2
+        ).toFixed(binanceFutureExchangeInfo[`${shortSymbol}`]['decimalNum']);
+        if (
+          quantity > 0 &&
+          quantity >= binanceFutureExchangeInfo[`${shortSymbol}`]['minQty']
+        ) {
+          const data = await BinanceFutureApiHandler.openPosition(
+            shortSymbol,
+            'SELL',
+            quantity,
+          );
+          isShort = true;
+          console.log(`${shortSymbol} open short position`);
+        }
         break;
       }
     }
+    if (!isShort) {
+      console.log('No symbol to short.');
+    }
+  } catch (error) {
+    console.log(`[Error] ${error.message}`);
+    process.exit(0);
+  }
+}
 
-    for (let i = delta.length - 1; i > 0; i--) {
-      if (binanceExchangeInfo.hasOwnProperty(`${delta[i][0]}BUSD`)) {
-        console.log(`${delta[i][0]}BUSD`, 'long 들어간다 !');
-        break;
-      } else if (binanceExchangeInfo.hasOwnProperty(`${delta[i][0]}USDT`)) {
-        console.log(`${delta[i][0]}USDT`, 'long 들어간다 !');
-        break;
+async function closePosition() {
+  try {
+    console.log('CLOSE POSITION');
+    const accountInfo = await BinanceFutureApiHandler.getAccountInfo(false);
+    for (let account of accountInfo) {
+      if (Number(account.positionAmt) !== 0) {
+        const quantity =
+          Number(account.positionAmt) < 0
+            ? Number(account.positionAmt) * -1
+            : Number(account.positionAmt);
+
+        const side = Number(account.positionAmt) < 0 ? 'BUY' : 'SELL';
+        const data = await BinanceFutureApiHandler.closePosition(
+          account.symbol,
+          side,
+          quantity,
+        );
+        console.log(`${account.symbol} close short position`);
       }
     }
   } catch (error) {
+    console.log(`[Error] ${error.message}`);
     process.exit(0);
   }
+}
 
-  //   const data = response.data;
-  //   console.log('data.message', data.message);
-  //   //   console.log('response.status', response.status);
-  //   if (!response.status === 200) {
-  //     console.log('hello');
-  //     // console.error(
-  //     //   `[Axios Error] ${data.message} (status : ${response.status})))`,
-  //     // );
-  //     process.exit(0);
-  //   }
-  //   //   console.log(response);
+async function main() {
+  //   cron.schedule('0 0 0 * * *', async () => {
+  //     await closePosition();
+  //     await openPosition();
+  //   });
+
+  cron.schedule('0 */5 * * * *', async () => {
+    await openPosition();
+    setTimeout(() => {
+      closePosition();
+    }, 1000 * 60 * 2);
+  });
 }
 
 main();
