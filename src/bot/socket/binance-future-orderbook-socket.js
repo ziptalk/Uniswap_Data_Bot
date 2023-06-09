@@ -8,7 +8,7 @@ class BinanceFutureOrderbookSocket {
     this.msg = msg;
     this.redisClient = redisClient;
     this.socketEmiiter = socketEmiiter;
-    this.ws = new WebSocket(`${this.endPoint}/?streams=${this.path}`);
+    this.ws = new WebSocket(`${this.endPoint}/?streams=${this.path.join('/')}`);
   }
 
   processWebSocket() {
@@ -66,11 +66,13 @@ class BinanceFutureOrderbookSocket {
     }
   }
 
-  processSocketEmitterCallback(ticker) {
+  processSocketEmitterCallback(tickers) {
     try {
-      this.socketEmiiter.on(ticker, (data) => {
-        this.redisClient.setValue(ticker, JSON.stringify(data));
-      });
+      for (let ticker of tickers) {
+        this.socketEmiiter.on(ticker, (data) => {
+          this.redisClient.setValue(ticker, JSON.stringify(data));
+        });
+      }
     } catch (error) {
       console.error(`[SOCKET EMIT CALLBACK] ${error}`);
     }

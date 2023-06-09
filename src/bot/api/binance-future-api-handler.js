@@ -197,6 +197,29 @@ class BinanceFutureApiHandler {
     });
   }
 
+  static async getTopFutureSymbols(limit = 300) {
+    try {
+      const response = await axios.get(
+        `${this.BINANCE_FUTURE_ENDPOINT}/fapi/v1/ticker/24hr`,
+      );
+      if (response.status === 200) {
+        const futuresData = response.data;
+        futuresData.sort((a, b) => parseFloat(b.volume) - parseFloat(a.volume));
+        const topFuturesSymbols = futuresData
+          .slice(0, limit)
+          .map((data) => data.symbol);
+        return topFuturesSymbols;
+      }
+    } catch (error) {
+      if (error.response.data) {
+        console.error(`[Axios Error-Binance] ${error.response.data.msg}`);
+      } else {
+        console.error(`[Axios Error-Binance] ${error.message}`);
+      }
+      return null;
+    }
+  }
+
   static #makeQueryString(params) {
     return Object.keys(params)
       .reduce((a, k) => {
