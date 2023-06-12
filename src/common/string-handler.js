@@ -1,10 +1,13 @@
 class StringHandler {
   static makeValidTableName(token) {
+    let tableName = token;
     if (!isNaN(token.charAt('0'))) {
-      return '_' + token;
-    } else {
-      return token;
+      tableName = '_' + tableName;
     }
+    if (tableName.includes('-')) {
+      tableName = tableName.replace('-', '_');
+    }
+    return tableName;
   }
 }
 
