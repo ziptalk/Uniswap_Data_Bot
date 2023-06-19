@@ -86,6 +86,43 @@ class UniswapV3SubgraphHandler {
       console.error(`[Axios Error-Uniswap-V3] ${error.message}`);
     }
   }
+
+  static async getTransactions(poolAddress, startMoment, endMoment) {
+    try {
+      const query = `
+      {
+        transactions(first: 10, orderBy: timestamp, orderDirection: desc) {
+          id
+          timestamp
+          blockNumber
+          swaps(where: { pool: "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8" }) {
+            id
+            amount0
+            amount1
+            amountUSD
+            tick
+            pool {
+              token0 {
+                id
+                symbol
+              }
+              token1 {
+                id
+                symbol
+              }
+            }
+          }
+        }
+      }`;
+
+      const response = await axios.post(this.UNISWAP_V3_SUBGRAPH_ENDPOINT, {
+        query,
+      });
+      return response.data.data.tokens;
+    } catch (error) {
+      console.error(`[Axios Error-Uniswap-V3] ${error.message}`);
+    }
+  }
 }
 
 module.exports = { UniswapV3SubgraphHandler };
