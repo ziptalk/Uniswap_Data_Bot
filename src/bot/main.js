@@ -15,15 +15,9 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 let POSITION_INFO;
+let BINANCE_USDT_BALANCE, BINANCE_BALANCE_TIMESTAMP;
 const BINANCE_WS_ENDPOINT = 'wss://fstream.binance.com/stream';
 const REDIS_CLIENT = new RedisClient('127.0.0.1', 6379);
-
-function setBinanceBalance(assetInfo) {
-  BINANCE_USDT_BALANCE = assetInfo.find((asset) => asset.asset === 'USDT')
-    ? Number(assetInfo.find((asset) => asset.asset === 'USDT').availableBalance)
-    : 0;
-  BINANCE_BALANCE_TIMESTAMP = moment().utc().valueOf();
-}
 
 async function subscribeBinanceBalance() {
   try {
@@ -31,7 +25,12 @@ async function subscribeBinanceBalance() {
       'USDT',
     ]);
     POSITION_INFO = await BinanceFutureApiHandler.getAccountInfo(false);
-    setBinanceBalance(assetInfo);
+    BINANCE_USDT_BALANCE = assetInfo.find((asset) => asset.asset === 'USDT')
+      ? Number(
+          assetInfo.find((asset) => asset.asset === 'USDT').availableBalance,
+        )
+      : 0;
+    BINANCE_BALANCE_TIMESTAMP = moment().utc().valueOf();
   } catch (error) {
     throw new Error(error.message);
   }
@@ -81,11 +80,11 @@ async function openPosition() {
       }
       if (binanceFutureExchangeInfo.hasOwnProperty(`${delta[i][0]}USDT`)) {
         const shortSymbol = `${delta[i][0]}USDT`;
-        const accountInfo = await BinanceFutureApiHandler.getAccountInfo(true, [
-          'USDT',
-        ]);
-        const usdtQuantity = Number(accountInfo[0]['availableBalance']) * 0.2;
-
+        if (moment().utc().valueOf() - BINANCE_BALANCE_TIMESTAMP > 11000) {
+          return subscribeBinanceBalance();
+        }
+        // USDT 잔고의 20퍼로 진입
+        const usdtQuantity = Number(BINANCE_USDT_BALANCE) * 0.2;
         if (usdtQuantity === 0) {
           return;
         }
@@ -168,8 +167,9 @@ async function closePositionAfterPriceChange() {
         const entryPrice = Number(position.entryPrice);
         const priceDelta = ((currentPrice - entryPrice) / entryPrice) * 100;
         if (-6 < priceDelta && priceDelta < 2) {
-          return;
+          continue;
         }
+        console.log(`CLOSE POSITION after price change (${position.symbol})`);
         console.log(`${position.symbol} priceDelta : ${priceDelta}`);
         const side = Number(position.positionAmt) < 0 ? 'BUY' : 'SELL';
         const quantity =
@@ -178,7 +178,7 @@ async function closePositionAfterPriceChange() {
             : Number(position.positionAmt);
         const data = await BinanceFutureApiHandler.closePosition(
           position.symbol,
-          'side',
+          side,
           quantity,
         );
         console.log(
@@ -251,9 +251,8 @@ async function main() {
       return closePositionAfterPriceChange();
     }, 1000 * 10);
 
-    const startTime = moment().utc();
-    // 매일 한번 포지션 진입, 24시간 뒤 청산 => cron 안의 값을 수정해야함
-    cron.schedule('0 54 * * * *', async () => {
+    // 매일 한번 포지션 진입, 24시간 뒤 청산
+    cron.schedule('0 0 0 * * *', async () => {
       openPosition().then(() => {
         setTimeout(() => {
           closePositionAfterCertainMoment();
