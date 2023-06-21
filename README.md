@@ -81,8 +81,16 @@
 
 - 거래소 (Binance, Coingecko, Uniswap) <-> Redis (local) <-> RDS (AWS)
 - Binance 웹소켓과 Coingecko API를 통해서 특정 종목들의 가격 정보를 Redis에 지속적으로 저장
-- Uniswap 웹소켓을 통해 여러 풀들의 Swap 이벤트를 받아 Redis에 지속적으로 저장
+- Uniswap 웹소켓을 통해 여러 풀들의 Swap 이벤트를 받아 각 종목의 가격 정보와 함께 Redis에 지속적으로 저장
 - cron을 통해 1분에 한번씩 Redis에 있는 값들을 읽어 파싱한 뒤 RDS 내 각 종목 테이블에 저장
+- startup script를 통해 컴퓨터가 껐다 켜져도 자동으로 프로그램이 실행되도록 구현
+
+[Redis 예시]
+<img width="239" alt="redis 예시" src="https://github.com/ziptalk/Uniswap_Data_Bot/assets/46603634/c005d3f3-7679-41ff-b422-17d3c848f518">
+<img width="191" alt="redis 예시2" src="https://github.com/ziptalk/Uniswap_Data_Bot/assets/46603634/1f75bd2b-5b40-4688-a765-5e7045551a17">
+
+[RDS 예시]
+<img width="244" alt="rds 예시" src="https://github.com/ziptalk/Uniswap_Data_Bot/assets/46603634/723a129d-8fa9-46ae-a3fd-484e2e28391d">
 
 ### 🔮 API (src/api/)
 
@@ -145,5 +153,3 @@
   - 30퍼 이상 수익 발생 시 즉시 포지션 종료, 10퍼 이상 손실 발생 시 즉시 포지션 종료
   - 진입 가격 기준 현재 가격 6퍼 감소 시 익절, 2퍼 증가 시 손절
 - 포지션 진입 후 일정 시간(ex. 24시간, 3일) 뒤 포지션 자동 청산
-
-<img width="239" alt="redis 예시" src="https://github.com/ziptalk/Uniswap_Data_Bot/assets/46603634/c005d3f3-7679-41ff-b422-17d3c848f518">
